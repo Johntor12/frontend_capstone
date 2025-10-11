@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_application_capstone/reusable_button.dart';
-import 'App_Colors.dart';
+import 'core/widgets/app_colors.dart';
+import 'package:flutter_application_capstone/presentation/widgets/header_section.dart';
+import 'presentation/widgets/info_banner.dart';
+import 'presentation/widgets/menu_section.dart';
 
 void main() {
+  // debugPaintSizeEnabled = true;
   runApp(const MyApp());
 }
 
@@ -12,7 +17,6 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
@@ -41,7 +45,6 @@ class MyApp extends StatelessWidget {
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
 
-
   final String title;
 
   @override
@@ -60,21 +63,21 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            ReusableButton(text: 'Click Me', onPressed: _incrementCounter)
-          ],
+      appBar: PreferredSize(preferredSize: const Size.fromHeight(72), child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: const HeaderSection())),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: <Widget>[
+              const InfoBanner(),
+              Expanded( 
+                child: MenuSection()
+              ),
+            ],
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(

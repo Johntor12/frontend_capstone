@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_capstone/App_Colors.dart';
+import 'package:flutter_application_capstone/core/widgets/app_colors.dart';
 
 class ReusableButton extends StatelessWidget {
   final String text;
@@ -7,15 +7,13 @@ class ReusableButton extends StatelessWidget {
   final Color? buttonColor;
   final Color? textColor;
 
-
   const ReusableButton({
     Key? key,
     required this.text,
     required this.onPressed,
     this.buttonColor,
     this.textColor,
-  }): super (key: key);
-
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -25,9 +23,7 @@ class ReusableButton extends StatelessWidget {
         backgroundColor: buttonColor ?? AppColors.purple100,
         foregroundColor: textColor ?? Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
       child: Text(text),
     );
