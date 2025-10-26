@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_capstone/presentation/pages/list_terminal.dart';
-import 'package:flutter_application_capstone/presentation/pages/schedule_page.dart';
+import 'package:flutter_application_capstone/presentation/pages/schedule_page.dart'; // <- updated
 import 'package:flutter_application_capstone/presentation/pages/settings_mode.dart';
 import 'package:flutter_application_capstone/presentation/pages/statistics_page.dart';
 import 'package:flutter_application_capstone/presentation/widgets/custom_menu_card.dart';
+import 'package:flutter_application_capstone/presentation/widgets/custom_bottom_nav.dart';
 
 class MenuSection extends StatelessWidget {
   const MenuSection({super.key});
@@ -52,9 +53,11 @@ class MenuSection extends StatelessWidget {
               imagePath: "lib/assets/images/smart_scheduling_image.png",
               backgroundColor: Color(0xFFFFCE94),
               onPressed: () {
-                Navigator.of(
-                  context,
-                ).push(MaterialPageRoute(builder: (context) => SchedulePage()));
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const SchedulingPage(),
+                  ),
+                );
               },
             ),
             CustomMenuCard(

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
+// ignore: unnecessary_import
 import 'package:flutter/rendering.dart';
-import 'package:flutter_application_capstone/reusable_button.dart';
-import 'core/widgets/app_colors.dart';
 import 'package:flutter_application_capstone/presentation/widgets/header_section.dart';
 import 'presentation/widgets/info_banner.dart';
 import 'presentation/widgets/menu_section.dart';
@@ -54,18 +53,22 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
 
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
+  // void _incrementCounter() {
+  //   setState(() {
+  //     _counter++;
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(preferredSize: const Size.fromHeight(72), child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: const HeaderSection())),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(72),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: const HeaderSection(),
+        ),
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -73,18 +76,20 @@ class _MyHomePageState extends State<MyHomePage> {
             mainAxisAlignment: MainAxisAlignment.start,
             children: <Widget>[
               const InfoBanner(),
-              Expanded( 
-                child: MenuSection()
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text('Counter: $_counter'),
               ),
+              Expanded(child: MenuSection()),
             ],
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: _incrementCounter,
+      //   tooltip: 'Increment',
+      //   child: const Icon(Icons.add),
+      // ),
     );
   }
 }

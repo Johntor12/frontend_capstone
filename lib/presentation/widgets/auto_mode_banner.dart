@@ -1,7 +1,17 @@
+// lib/presentation/widgets/auto_mode_banner.dart
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class AutoModeBanner extends StatelessWidget {
-  const AutoModeBanner({super.key});
+  final VoidCallback onStartKnapsack; // Callback ke parent FE
+  final bool isLoading;
+
+  const AutoModeBanner({
+    super.key,
+    required this.onStartKnapsack,
+    this.isLoading = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -16,9 +26,10 @@ class AutoModeBanner extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                "Algoritma \nKnapsack",
+              const Text(
+                "Algoritma\nKnapsack",
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
@@ -33,20 +44,25 @@ class AutoModeBanner extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                onPressed: () {},
-                child: const Text(
-                  "START →",
-                  style: TextStyle(color: Colors.white),
-                ),
+                onPressed: isLoading ? null : onStartKnapsack,
+                child: isLoading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        "START →",
+                        style: TextStyle(color: Colors.white),
+                      ),
               ),
             ],
           ),
-
           const SizedBox(width: 20),
-          Image.asset(
-            'lib/assets/images/AI_head.png', // ganti sesuai nama file kamu
-            width: 120,
-          ),
+          Image.asset('lib/assets/images/AI_head.png', width: 120),
         ],
       ),
     );

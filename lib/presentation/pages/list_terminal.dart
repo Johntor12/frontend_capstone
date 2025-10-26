@@ -1,7 +1,8 @@
-// lib/pages/terminal_list_page.dart
+// lib/presentation/pages/list_terminal.dart
 import 'package:flutter/material.dart';
 import '../models/terminal.dart';
 import '../widgets/terminal_card.dart';
+import '../widgets/custom_bottom_nav.dart';
 
 class TerminalListPage extends StatefulWidget {
   const TerminalListPage({super.key});
@@ -17,12 +18,11 @@ class _TerminalListPageState extends State<TerminalListPage> {
   @override
   void initState() {
     super.initState();
-    // contoh data awal
+    // contoh data awal: gunakan priorityOrder, bukan isPriority
     _terminals = List.generate(4, (index) {
       return Terminal(
         id: 't${index + 1}',
         title: 'Terminal ${index + 1}',
-        isPriority: index % 2 == 0,
         imagePath: 'lib/assets/images/terminal_icon.png',
       );
     });
@@ -40,12 +40,34 @@ class _TerminalListPageState extends State<TerminalListPage> {
     return _terminals.where((t) => t.title.toLowerCase().contains(q)).toList();
   }
 
+  // daftar nomor prioritas yang sudah dipakai
+  List<int> get usedPriorities => _terminals
+      .where((t) => t.priorityOrder != null)
+      .map((t) => t.priorityOrder!)
+      .toList();
+
+  void _handlePriorityChange(Terminal t, int? number) {
+    setState(() {
+      // jika nomor sudah dipakai oleh terminal lain, lepaskan dari terminal lain
+      for (var other in _terminals) {
+        if (other != t && other.priorityOrder == number) {
+          other.priorityOrder = null;
+        }
+      }
+      // assign / toggle
+      t.priorityOrder = number;
+    });
+
+    // TODO: kirim update ke backend / simpan ke Supabase di sini
+    debugPrint('Priority Updated: ${t.id} => ${t.priorityOrder}');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'List Terminal',
+          'Device Priority',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -90,11 +112,10 @@ class _TerminalListPageState extends State<TerminalListPage> {
                         padding: const EdgeInsets.all(12),
                         child: TerminalCard(
                           terminal: t,
-                          onToggle: (val) {
-                            setState(() {
-                              t.isPriority = val; // update model
-                            });
-                          },
+                          usedPriorities: usedPriorities,
+                          onSelectPriority: (number) =>
+                              _handlePriorityChange(t, number),
+                          variant: "primary",
                         ),
                       ),
                     );
@@ -105,6 +126,7 @@ class _TerminalListPageState extends State<TerminalListPage> {
           ),
         ),
       ),
+      bottomNavigationBar: const CustomBottomNav(currentIndex: 0),
     );
   }
 }

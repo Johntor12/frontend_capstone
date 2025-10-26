@@ -16,20 +16,21 @@ class CustomMenuCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      padding: const EdgeInsets.all(16),
-      child: ElevatedButton(
-        onPressed: onPressed,
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: onPressed,
+      splashColor: Colors.white.withOpacity(0.2), // efek klik lembut
+      child: Container(
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Expanded(child: Image.asset(imagePath)),
+            Expanded(child: Image.asset(imagePath, fit: BoxFit.contain)),
             const SizedBox(height: 8),
-            // Teks
             Text(
               title,
               style: const TextStyle(
@@ -37,6 +38,7 @@ class CustomMenuCard extends StatelessWidget {
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
               ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),

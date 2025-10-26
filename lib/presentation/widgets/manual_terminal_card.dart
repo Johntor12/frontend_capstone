@@ -21,8 +21,9 @@ class ManualTerminalCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Gambar Terminal
+          // 🟣 Gambar Terminal
           Container(
             width: 72,
             height: 72,
@@ -41,19 +42,22 @@ class ManualTerminalCard extends StatelessWidget {
 
           const SizedBox(width: 20),
 
-          // Teks & Switch
+          // 🟢 Teks + Toggle vertikal
           Expanded(
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Text(
-                    terminal.title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                    ),
+                // Judul Terminal
+                Text(
+                  terminal.title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
                   ),
                 ),
+                const SizedBox(height: 8),
+
+                // Switch di bawah judul
                 Row(
                   children: [
                     Switch(
