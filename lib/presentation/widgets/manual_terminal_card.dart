@@ -1,14 +1,19 @@
+// lib/presentation/widgets/manual_terminal_card.dart
 import 'package:flutter/material.dart';
 import '../models/terminal.dart';
 
 class ManualTerminalCard extends StatelessWidget {
   final Terminal terminal;
   final ValueChanged<bool> onToggle;
+  final bool enabled; // whether switch is interactive
+  final bool loading; // whether waiting for ack
 
   const ManualTerminalCard({
     super.key,
     required this.terminal,
     required this.onToggle,
+    this.enabled = true,
+    this.loading = false,
   });
 
   @override
@@ -60,11 +65,26 @@ class ManualTerminalCard extends StatelessWidget {
                 // Switch di bawah judul
                 Row(
                   children: [
-                    Switch(
-                      value: terminal.isOn,
-                      onChanged: (val) => onToggle(val),
-                      activeColor: const Color(0xFF6A4DF5),
-                    ),
+                    // show loading spinner when waiting for ack
+                    if (loading)
+                      SizedBox(
+                        width: 40,
+                        height: 24,
+                        child: const Center(
+                          child: SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      )
+                    else
+                      Switch(
+                        value: terminal.isOn,
+                        onChanged: enabled ? (val) => onToggle(val) : null,
+                        activeColor: const Color(0xFF6A4DF5),
+                      ),
+                    const SizedBox(width: 6),
                     Text(
                       terminal.isOn ? "ON" : "OFF",
                       style: TextStyle(

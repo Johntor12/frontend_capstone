@@ -1,5 +1,8 @@
 // lib/presentation/pages/list_terminal.dart
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import '../../core/api_config.dart';
 import '../models/terminal.dart';
 import '../widgets/terminal_card.dart';
 import '../widgets/custom_bottom_nav.dart';
@@ -18,10 +21,9 @@ class _TerminalListPageState extends State<TerminalListPage> {
   @override
   void initState() {
     super.initState();
-    // contoh data awal: gunakan priorityOrder, bukan isPriority
     _terminals = List.generate(4, (index) {
       return Terminal(
-        id: 't${index + 1}',
+        id: 'terminal_${index + 1}',
         title: 'Terminal ${index + 1}',
         imagePath: 'lib/assets/images/terminal_icon.png',
       );
@@ -46,20 +48,37 @@ class _TerminalListPageState extends State<TerminalListPage> {
       .map((t) => t.priorityOrder!)
       .toList();
 
-  void _handlePriorityChange(Terminal t, int? number) {
+  //kirim data ke backend
+  Future<void> _handlePriorityChange(Terminal t, int? number) async {
     setState(() {
-      // jika nomor sudah dipakai oleh terminal lain, lepaskan dari terminal lain
       for (var other in _terminals) {
         if (other != t && other.priorityOrder == number) {
           other.priorityOrder = null;
         }
       }
-      // assign / toggle
       t.priorityOrder = number;
     });
 
-    // TODO: kirim update ke backend / simpan ke Supabase di sini
     debugPrint('Priority Updated: ${t.id} => ${t.priorityOrder}');
+
+    try {
+      final url = Uri.parse(
+        "http://10.0.2.2:3000/api/terminals/updatePriority",
+      );
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'terminalId': t.id, 'priority': t.priorityOrder}),
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('Priority updated on backend');
+      } else {
+        debugPrint('Failed to update priority: ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('Error sending data: $e');
+    }
   }
 
   @override
@@ -71,13 +90,16 @@ class _TerminalListPageState extends State<TerminalListPage> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              // Search bar
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
@@ -95,8 +117,6 @@ class _TerminalListPageState extends State<TerminalListPage> {
                 ),
               ),
               const SizedBox(height: 16),
-
-              // list
               Expanded(
                 child: ListView.separated(
                   itemCount: _filtered.length,

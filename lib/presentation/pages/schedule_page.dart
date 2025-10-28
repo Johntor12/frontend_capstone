@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'schedule_form.dart';
-import '../models/terminal.dart';
+
 import '../widgets/custom_bottom_nav.dart';
 
 class SchedulingPage extends StatefulWidget {
@@ -53,6 +53,10 @@ class _SchedulingPageState extends State<SchedulingPage> {
         foregroundColor: Colors.black,
         elevation: 0,
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       backgroundColor: Colors.white,
       body: ListView.builder(

@@ -1,7 +1,7 @@
 // lib/presentation/widgets/auto_mode_banner.dart
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+//import 'package:http/http.dart' as http;
+//import 'dart:convert';
 
 class AutoModeBanner extends StatelessWidget {
   final VoidCallback onStartKnapsack; // Callback ke parent FE

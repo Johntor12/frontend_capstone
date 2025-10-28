@@ -4,7 +4,8 @@ import 'package:flutter_application_capstone/presentation/pages/schedule_page.da
 import 'package:flutter_application_capstone/presentation/pages/settings_mode.dart';
 import 'package:flutter_application_capstone/presentation/pages/statistics_page.dart';
 import 'package:flutter_application_capstone/presentation/widgets/custom_menu_card.dart';
-import 'package:flutter_application_capstone/presentation/widgets/custom_bottom_nav.dart';
+//import 'package:flutter_application_capstone/presentation/widgets/custom_bottom_nav.dart';
+
 
 class MenuSection extends StatelessWidget {
   const MenuSection({super.key});

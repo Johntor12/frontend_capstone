@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/widgets/app_text.dart';
 import '../../core/widgets/app_colors.dart';
 
 class InfoBanner extends StatelessWidget {
@@ -18,6 +17,7 @@ class InfoBanner extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          // ignore: avoid_unnecessary_containers
           Container(
           // Image section
           child: Image.asset(
@@ -43,6 +43,7 @@ class InfoBanner extends StatelessWidget {
                 ),
                 Column(
                   children: [
+                    // ignore: avoid_unnecessary_containers
                     Container(
                       child: Text(
                         "Smart Load Controller",
