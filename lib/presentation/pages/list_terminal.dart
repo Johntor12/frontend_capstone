@@ -21,13 +21,38 @@ class _TerminalListPageState extends State<TerminalListPage> {
   @override
   void initState() {
     super.initState();
-    _terminals = List.generate(4, (index) {
-      return Terminal(
-        id: 'terminal_${index + 1}',
-        title: 'Terminal ${index + 1}',
-        imagePath: 'lib/assets/images/terminal_icon.png',
+    _fetchTerminals();
+  }
+
+  Future<void> _fetchTerminals() async {
+    try {
+      final res = await http.get(
+        Uri.parse("http://10.0.2.2:3000/api/terminals"),
       );
-    });
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        setState(() {
+          _terminals = (data['data'] as List)
+              .map(
+                (e) => Terminal(
+                  id: e['terminalId'].toString(),
+                  title: "Terminal ${e['terminalId']}",
+                  imagePath: "lib/assets/images/terminal_icon.png",
+                  isOn:
+                      (e['terminalStatus']?.toString().toLowerCase() ??
+                          'off') ==
+                      'on',
+                  priorityOrder: e['terminalPriority'] == 0
+                      ? null
+                      : int.tryParse(e['terminalPriority'].toString()),
+                ),
+              )
+              .toList();
+        });
+      }
+    } catch (e) {
+      debugPrint("fetch error: $e");
+    }
   }
 
   @override
@@ -117,6 +142,83 @@ class _TerminalListPageState extends State<TerminalListPage> {
                 ),
               ),
               const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF5B38CB), // ungu benar
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        elevation: 0,
+                      ),
+                      onPressed: () async {
+                        Map<String, int?> map = {};
+                        for (var t in _terminals) {
+                          map[t.id] = t.priorityOrder;
+                        }
+                        final res = await http.post(
+                          Uri.parse(
+                            "http://10.0.2.2:3000/api/terminals/savePrioritiesAutoFill",
+                          ),
+                          headers: {'Content-Type': 'application/json'},
+                          body: jsonEncode(map),
+                        );
+                        if (res.statusCode == 200) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Saved")),
+                          );
+                          await _fetchTerminals();
+                        }
+                      },
+                      child: const Text(
+                        "Save Priority",
+                        style: TextStyle(
+                          fontFamily: "Inter",
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFD7D8A), // pink benar
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        elevation: 0,
+                      ),
+                      onPressed: () async {
+                        await http.post(
+                          Uri.parse(
+                            "http://10.0.2.2:3000/api/terminals/resetPriorities",
+                          ),
+                        );
+                        await _fetchTerminals();
+                      },
+                      child: const Text(
+                        "Reset",
+                        style: TextStyle(
+                          fontFamily: "Inter",
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
               Expanded(
                 child: ListView.separated(
                   itemCount: _filtered.length,
