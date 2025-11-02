@@ -63,7 +63,7 @@ class _TerminalListPageState extends State<TerminalListPage> {
 
     try {
       final url = Uri.parse(
-        "http://10.0.2.2:3000/api/terminals/updatePriority",
+        "http://10.0.2.2:3000/api/knapsack/terminals/updatePriority",
       );
       final response = await http.post(
         url,
