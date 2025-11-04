@@ -1,7 +1,9 @@
+// lib/presentation/pages/schedule_page.dart
 import 'package:flutter/material.dart';
 import 'schedule_form.dart';
-
 import '../widgets/custom_bottom_nav.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class SchedulingPage extends StatefulWidget {
   const SchedulingPage({super.key});
@@ -11,33 +13,112 @@ class SchedulingPage extends StatefulWidget {
 }
 
 class _SchedulingPageState extends State<SchedulingPage> {
-  final List<Map<String, dynamic>> schedules = [
-    {
-      "terminal": "Terminal 1",
-      "date": "21 Oct 2025",
-      "time": "18:00 - 19:00",
-      "image": "lib/assets/images/terminal_icon.png",
-    },
-    {
-      "terminal": "Terminal 2",
-      "date": "21 Oct 2025",
-      "time": "20:00 - 22:00",
-      "image": "lib/assets/images/terminal_icon.png",
-    },
-  ];
+  final String baseUrl = 'http://10.0.2.2:3000';
+  List<Map<String, dynamic>> schedules = [];
+  List<Map<String, dynamic>> allTerminals = []; // raw terminals (for form)
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchSchedules();
+  }
+
+  Future<void> _fetchSchedules() async {
+    try {
+      final res = await http.get(Uri.parse('$baseUrl/api/terminals'));
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body);
+        final list = (body['data'] as List).cast<Map<String, dynamic>>();
+
+        // store all terminals for form usage
+        allTerminals = list;
+
+        // filter only those with schedule (startOn != null)
+        schedules = list.where((t) => t['startOn'] != null).map((t) {
+          final start = DateTime.tryParse(t['startOn'] ?? '');
+          final finish = DateTime.tryParse(t['finishOn'] ?? '');
+          String dateStr = '';
+          String timeStr = '';
+          if (start != null && finish != null) {
+            // convert to local for display in WIB (we assume device in WIB or want to display in Asia/Jakarta)
+            final localStart = start.toLocal();
+            final localFinish = finish.toLocal();
+            dateStr =
+                '${localStart.day.toString().padLeft(2, '0')} ${_monthName(localStart.month)} ${localStart.year}';
+            timeStr =
+                '${localStart.hour.toString().padLeft(2, '0')}:${localStart.minute.toString().padLeft(2, '0')} - ${localFinish.hour.toString().padLeft(2, '0')}:${localFinish.minute.toString().padLeft(2, '0')}';
+          }
+          return {
+            'terminalId': t['terminalId'],
+            'terminalTitle': 'Terminal ${t['terminalId']}',
+            'date': dateStr,
+            'time': timeStr,
+            'startOn': t['startOn'],
+            'finishOn': t['finishOn'],
+            'image': 'lib/assets/images/terminal_icon.png',
+          };
+        }).toList();
+        setState(() {});
+      } else {
+        debugPrint('Failed load terminals: ${res.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Error fetch schedules: $e');
+    }
+  }
+
+  String _monthName(int m) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return months[m - 1];
+  }
 
   void _openAddSchedule() async {
-    final result = await showModalBottomSheet<Map<String, dynamic>>(
+    // pass allTerminals so form can disable terminals that already have schedule
+    final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => const ScheduleForm(),
+      builder: (context) => ScheduleForm(terminals: allTerminals),
     );
 
-    if (result != null) {
-      setState(() {
-        schedules.add(result);
-      });
+    if (result == true) {
+      await _fetchSchedules();
+    }
+  }
+
+  Future<void> _deleteSchedule(String terminalId) async {
+    try {
+      final res = await http.delete(
+        Uri.parse('$baseUrl/api/terminals/$terminalId/schedule'),
+      );
+      if (res.statusCode == 200) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Schedule removed')));
+        await _fetchSchedules();
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed delete: ${res.body}')));
+      }
+    } catch (e) {
+      debugPrint('Delete schedule error: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Network error')));
     }
   }
 
@@ -80,7 +161,6 @@ class _SchedulingPageState extends State<SchedulingPage> {
             ),
             child: Row(
               children: [
-                // Icon terminal
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
@@ -90,13 +170,12 @@ class _SchedulingPageState extends State<SchedulingPage> {
                   child: Image.asset(item['image'], width: 42, height: 42),
                 ),
                 const SizedBox(width: 16),
-                // Info
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item['terminal'],
+                        item['terminalTitle'],
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
@@ -118,11 +197,7 @@ class _SchedulingPageState extends State<SchedulingPage> {
                   ),
                 ),
                 IconButton(
-                  onPressed: () {
-                    setState(() {
-                      schedules.removeAt(index);
-                    });
-                  },
+                  onPressed: () => _deleteSchedule(item['terminalId']),
                   icon: const Icon(Icons.delete_outline, color: Colors.red),
                 ),
               ],
@@ -130,8 +205,6 @@ class _SchedulingPageState extends State<SchedulingPage> {
           );
         },
       ),
-
-      // Floating button ➕
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFFA6ACFA),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),

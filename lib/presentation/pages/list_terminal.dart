@@ -147,9 +147,9 @@ class _TerminalListPageState extends State<TerminalListPage> {
                   Expanded(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF5B38CB), // ungu benar
+                        backgroundColor: const Color(0x826A4DF5), // ungu benar
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(18),
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         elevation: 0,
@@ -190,9 +190,9 @@ class _TerminalListPageState extends State<TerminalListPage> {
                   Expanded(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFD7D8A), // pink benar
+                        backgroundColor: const Color(0x82FD7D8A), // pink benar
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(18),
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         elevation: 0,

@@ -5,8 +5,8 @@ import '../models/terminal.dart';
 class ManualTerminalCard extends StatelessWidget {
   final Terminal terminal;
   final ValueChanged<bool> onToggle;
-  final bool enabled; // whether switch is interactive
-  final bool loading; // whether waiting for ack
+  final bool enabled;
+  final bool loading;
 
   const ManualTerminalCard({
     super.key,
@@ -28,7 +28,6 @@ class ManualTerminalCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 🟣 Gambar Terminal
           Container(
             width: 72,
             height: 72,
@@ -44,15 +43,11 @@ class ManualTerminalCard extends StatelessWidget {
               height: 48,
             ),
           ),
-
           const SizedBox(width: 20),
-
-          // 🟢 Teks + Toggle vertikal
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Judul Terminal
                 Text(
                   terminal.title,
                   style: const TextStyle(
@@ -61,30 +56,32 @@ class ManualTerminalCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-
-                // Switch di bawah judul
                 Row(
                   children: [
-                    // show loading spinner when waiting for ack
                     if (loading)
-                      SizedBox(
-                        width: 40,
+                      const SizedBox(
+                        width: 24,
                         height: 24,
-                        child: const Center(
-                          child: SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        ),
+                        child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     else
                       Switch(
                         value: terminal.isOn,
-                        onChanged: enabled ? (val) => onToggle(val) : null,
+                        onChanged: enabled
+                            ? (val) => onToggle(val)
+                            : (val) {
+                                // jika disabled, beri notifikasi
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Algoritma sedang berjalan. Hentikan untuk kontrol manual.',
+                                    ),
+                                  ),
+                                );
+                              },
                         activeColor: const Color(0xFF6A4DF5),
                       ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 8),
                     Text(
                       terminal.isOn ? "ON" : "OFF",
                       style: TextStyle(

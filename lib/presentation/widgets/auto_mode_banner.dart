@@ -4,13 +4,15 @@ import 'package:flutter/material.dart';
 //import 'dart:convert';
 
 class AutoModeBanner extends StatelessWidget {
-  final VoidCallback onStartKnapsack; // Callback ke parent FE
-  final bool isLoading;
+  final VoidCallback onStartKnapsack; // Callback ke parent FE (mulai)
+  final VoidCallback onStopKnapsack; // Callback stop
+  final bool isRunning;
 
   const AutoModeBanner({
     super.key,
     required this.onStartKnapsack,
-    this.isLoading = false,
+    required this.onStopKnapsack,
+    this.isRunning = false,
   });
 
   @override
@@ -37,27 +39,56 @@ class AutoModeBanner extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6A4DF5),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onPressed: isLoading ? null : onStartKnapsack,
-                child: isLoading
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : const Text(
-                        "START →",
-                        style: TextStyle(color: Colors.white),
+              Row(
+                children: [
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF6A4DF5),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
+                    ),
+                    onPressed: isRunning ? null : onStartKnapsack,
+                    child: const Text(
+                      "START →",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isRunning
+                          ? const Color(0xFFFD7D8A)
+                          : Colors.grey,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: isRunning ? onStopKnapsack : null,
+                    child: isRunning
+                        ? Row(
+                            children: const [
+                              SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'STOP',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ],
+                          )
+                        : const Text(
+                            'STOP',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                  ),
+                ],
               ),
             ],
           ),

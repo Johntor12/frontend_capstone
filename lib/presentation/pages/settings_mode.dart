@@ -19,12 +19,12 @@ class SettingModeScreen extends StatefulWidget {
 }
 
 class _SettingModeScreenState extends State<SettingModeScreen> {
-  bool isManual = true;
-  bool isLoading = false;
-  final String baseUrl =
-      'http://10.0.2.2:3000'; // gunakan 10.0.2.2 untuk emulator Android
+  bool isManual = false; // <-- default ke OTOMATIS
+  bool isRunning = false; // apakah knapsack sedang berjalan
+  final String baseUrl = 'http://10.0.2.2:3000';
   List<Terminal> terminals = [];
   RealtimeChannel? _channel;
+  Timer? _statusPollTimer;
 
   // per-terminal loading state while waiting ack
   final Map<String, bool> _pending = {};
@@ -37,12 +37,75 @@ class _SettingModeScreenState extends State<SettingModeScreen> {
     super.initState();
     _fetchTerminals();
     _setupRealtimeListener();
+    _startStatusPolling();
   }
 
   @override
   void dispose() {
+    _statusPollTimer?.cancel();
     _channel?.unsubscribe();
     super.dispose();
+  }
+
+  void _startStatusPolling() {
+    // poll immediate then every 2s
+    _checkKnapsackStatus();
+    _statusPollTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+      _checkKnapsackStatus();
+    });
+  }
+
+  Future<void> _checkKnapsackStatus() async {
+    try {
+      final res = await http.get(Uri.parse('$baseUrl/api/knapsack/status'));
+      if (res.statusCode == 200) {
+        final d = jsonDecode(res.body);
+        final running = d['running'] == true;
+        if (mounted) setState(() => isRunning = running);
+      }
+    } catch (_) {
+      // ignore
+    }
+  }
+
+  Future<void> _startKnapsackLoop() async {
+    try {
+      final res = await http.post(Uri.parse('$baseUrl/api/knapsack/start'));
+      if (res.statusCode == 200) {
+        setState(() => isRunning = true);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Knapsack started')));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to start knapsack')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Network error starting knapsack')),
+      );
+    }
+  }
+
+  Future<void> _stopKnapsackLoop() async {
+    try {
+      final res = await http.post(Uri.parse('$baseUrl/api/knapsack/stop'));
+      if (res.statusCode == 200) {
+        setState(() => isRunning = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Knapsack stopped')));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to stop knapsack')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Network error stopping knapsack')),
+      );
+    }
   }
 
   Future<void> _fetchTerminals() async {
@@ -63,9 +126,7 @@ class _SettingModeScreenState extends State<SettingModeScreen> {
                 : int.tryParse(e['terminalPriority'].toString()),
           );
         }).toList();
-        setState(() {
-          terminals = list;
-        });
+        if (mounted) setState(() => terminals = list);
       } else {
         debugPrint('Failed fetch terminals: ${res.statusCode}');
       }
@@ -92,10 +153,7 @@ class _SettingModeScreenState extends State<SettingModeScreen> {
         setState(() {
           final idx = terminals.indexWhere((t) => t.id == id);
           if (idx != -1) terminals[idx].isOn = newStatus;
-          // if we were waiting for ack, check if matches desired state and clear pending
           if (_pending.containsKey(id) && _pending[id] == true) {
-            // we need to know what desired state was - we can track desired in _pendingDesired
-            // For simplicity: when pending true, we clear it and notify success if status matches
             _pending.remove(id);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -106,12 +164,9 @@ class _SettingModeScreenState extends State<SettingModeScreen> {
             );
           }
         });
-
-        debugPrint(
-          'Realtime update -> Terminal $id: ${newStatus ? "ON" : "OFF"}',
-        );
       },
     );
+
     _channel!.subscribe();
   }
 
@@ -124,13 +179,23 @@ class _SettingModeScreenState extends State<SettingModeScreen> {
     // If AUTO mode -> switches should be disabled (but check anyway)
     if (!isManual) return;
 
-    // If newState == true (user wants ON), we must ask backend to check threshold
-    // If newState == false (OFF), we send directly but still verify DB ack.
+    // If knapsack is running -> don't allow manual ON events
+    if (isRunning) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Algoritma sedang berjalan. Hentikan dulu untuk kontrol manual.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    // proceed normally (same logic as before)
     setState(() {
-      _pending[terminalId] = true; // mark loading
+      _pending[terminalId] = true;
     });
 
-    // Show spinner in card (via _pending map)
     final uri = Uri.parse('$baseUrl/api/terminals/$terminalId/set');
     try {
       final resp = await http.post(
@@ -144,19 +209,15 @@ class _SettingModeScreenState extends State<SettingModeScreen> {
         final accepted =
             body['accepted'] == true || body['message'] == 'Command published';
         if (!accepted && newState == true) {
-          // Backend rejected turning ON due capacity -> show notification and stop pending
           setState(() {
             _pending.remove(terminalId);
-            // revert local toggle state to value from DB (refresh)
           });
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Cannot turn on: threshold exceeded')),
           );
-          // Refresh current terminals from backend
           await _fetchTerminals();
           return;
         }
-        // If accepted, we now wait for DB realtime update (ACK from device) within timeout
         final ok = await _waitForStatusInDb(terminalId, newState, ackTimeoutMs);
         if (ok) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -172,7 +233,6 @@ class _SettingModeScreenState extends State<SettingModeScreen> {
               content: Text('No confirmation from device (timeout).'),
             ),
           );
-          // refresh from backend to read actual state
           await _fetchTerminals();
         }
       } else {
@@ -195,7 +255,7 @@ class _SettingModeScreenState extends State<SettingModeScreen> {
     }
   }
 
-  // wait for DB status to match desiredState, polling briefly or rely on realtime (we use both)
+  // ... _waitForStatusInDb remains same as previous code (copy from your file) ...
   Future<bool> _waitForStatusInDb(
     String terminalId,
     bool desiredState,
@@ -204,7 +264,6 @@ class _SettingModeScreenState extends State<SettingModeScreen> {
     final Completer<bool> completer = Completer<bool>();
     Timer? timer;
 
-    // quick check function
     Future<bool> checkOnce() async {
       try {
         final res = await http.get(Uri.parse('$baseUrl/api/terminals'));
@@ -228,29 +287,16 @@ class _SettingModeScreenState extends State<SettingModeScreen> {
       return false;
     }
 
-    // listen realtime temporary
-    void realtimeListener(dynamic payload) {
-      // If realtime updated, we can check
-      checkOnce().then((match) {
-        if (match && !completer.isCompleted) {
-          completer.complete(true);
-        }
-      });
-    }
-
-    // start timer for timeout
     timer = Timer(Duration(milliseconds: timeoutMs), () {
       if (!completer.isCompleted) completer.complete(false);
     });
 
-    // do immediate check
     final initial = await checkOnce();
     if (initial) {
       timer?.cancel();
       return true;
     }
 
-    // fallback: poll every 1s until timeout (also realtime may help)
     final int intervalMs = 1000;
     Timer? pollTimer;
     pollTimer = Timer.periodic(Duration(milliseconds: intervalMs), (t) async {
@@ -266,42 +312,6 @@ class _SettingModeScreenState extends State<SettingModeScreen> {
     pollTimer?.cancel();
     timer?.cancel();
     return result;
-  }
-
-  Future<void> _runKnapsack() async {
-    setState(() => isLoading = true);
-    try {
-      final res = await http.post(
-        Uri.parse('$baseUrl/api/knapsack/run'),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({}),
-      );
-
-      if (res.statusCode == 200) {
-        final result = jsonDecode(res.body);
-        final active = List<String>.from(result['data']['selected'] ?? []);
-        // We DO NOT set isOn directly from backend output; final state will come from DB realtime.
-        // But for visual feedback we can mark pending states (optional)
-        // We leave UI update to realtime to ensure authoritative state.
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Knapsack executed; awaiting device confirmations'),
-          ),
-        );
-      } else {
-        debugPrint('Failed run knapsack: ${res.statusCode}');
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Knapsack run failed')));
-      }
-    } catch (e) {
-      debugPrint('Error running knapsack: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Network error running knapsack')),
-      );
-    } finally {
-      setState(() => isLoading = false);
-    }
   }
 
   @override
@@ -336,8 +346,9 @@ class _SettingModeScreenState extends State<SettingModeScreen> {
               const SizedBox(height: 24),
               if (!isManual)
                 AutoModeBanner(
-                  onStartKnapsack: _runKnapsack,
-                  isLoading: isLoading,
+                  onStartKnapsack: _startKnapsackLoop,
+                  onStopKnapsack: _stopKnapsackLoop,
+                  isRunning: isRunning,
                 ),
               if (!isManual)
                 const Text(
@@ -347,9 +358,11 @@ class _SettingModeScreenState extends State<SettingModeScreen> {
               const SizedBox(height: 12),
               ...terminals.map((t) {
                 final loading = _pending[t.id] == true;
+                // When knapsack is running, manual toggles must be disabled
+                final enabled = isManual && !isRunning;
                 return ManualTerminalCard(
                   terminal: t,
-                  enabled: isManual,
+                  enabled: enabled,
                   loading: loading,
                   onToggle: (val) => _manualToggle(t.id, val),
                 );
