@@ -4,6 +4,7 @@ import 'schedule_form.dart';
 import '../widgets/custom_bottom_nav.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../../core/api_config.dart';
 
 class SchedulingPage extends StatefulWidget {
   const SchedulingPage({super.key});
@@ -13,7 +14,6 @@ class SchedulingPage extends StatefulWidget {
 }
 
 class _SchedulingPageState extends State<SchedulingPage> {
-  final String baseUrl = 'http://10.0.2.2:3000';
   List<Map<String, dynamic>> schedules = [];
   List<Map<String, dynamic>> allTerminals = []; // raw terminals (for form)
 
@@ -25,7 +25,7 @@ class _SchedulingPageState extends State<SchedulingPage> {
 
   Future<void> _fetchSchedules() async {
     try {
-      final res = await http.get(Uri.parse('$baseUrl/api/terminals'));
+      final res = await http.get(Uri.parse('$baseUrl/terminals'));
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
         final list = (body['data'] as List).cast<Map<String, dynamic>>();
@@ -102,7 +102,7 @@ class _SchedulingPageState extends State<SchedulingPage> {
   Future<void> _deleteSchedule(String terminalId) async {
     try {
       final res = await http.delete(
-        Uri.parse('$baseUrl/api/terminals/$terminalId/schedule'),
+        Uri.parse('$baseUrl/terminals/$terminalId/schedule'),
       );
       if (res.statusCode == 200) {
         ScaffoldMessenger.of(

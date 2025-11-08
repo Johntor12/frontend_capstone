@@ -26,9 +26,7 @@ class _TerminalListPageState extends State<TerminalListPage> {
 
   Future<void> _fetchTerminals() async {
     try {
-      final res = await http.get(
-        Uri.parse("http://10.0.2.2:3000/api/terminals"),
-      );
+      final res = await http.get(Uri.parse("$baseUrl/terminals"));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         setState(() {
@@ -87,9 +85,7 @@ class _TerminalListPageState extends State<TerminalListPage> {
     debugPrint('Priority Updated: ${t.id} => ${t.priorityOrder}');
 
     try {
-      final url = Uri.parse(
-        "http://10.0.2.2:3000/api/knapsack/terminals/updatePriority",
-      );
+      final url = Uri.parse("$baseUrl/knapsack/terminals/updatePriority");
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -161,7 +157,7 @@ class _TerminalListPageState extends State<TerminalListPage> {
                         }
                         final res = await http.post(
                           Uri.parse(
-                            "http://10.0.2.2:3000/api/terminals/savePrioritiesAutoFill",
+                            "$baseUrl/terminals/savePrioritiesAutoFill",
                           ),
                           headers: {'Content-Type': 'application/json'},
                           body: jsonEncode(map),
@@ -199,9 +195,7 @@ class _TerminalListPageState extends State<TerminalListPage> {
                       ),
                       onPressed: () async {
                         await http.post(
-                          Uri.parse(
-                            "http://10.0.2.2:3000/api/terminals/resetPriorities",
-                          ),
+                          Uri.parse("$baseUrl/terminals/resetPriorities"),
                         );
                         await _fetchTerminals();
                       },

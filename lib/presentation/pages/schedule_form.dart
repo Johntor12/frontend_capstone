@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/terminal.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../../core/api_config.dart';
 
 class ScheduleForm extends StatefulWidget {
   final List<Map<String, dynamic>> terminals; // from parent GET /api/terminals
@@ -17,8 +18,6 @@ class _ScheduleFormState extends State<ScheduleForm> {
   TimeOfDay? startTime;
   TimeOfDay? endTime;
   String? selectedTerminalId;
-
-  final String baseUrl = 'http://10.0.2.2:3000';
 
   Future<void> _pickDate(BuildContext context) async {
     final now = DateTime.now();
@@ -100,7 +99,7 @@ class _ScheduleFormState extends State<ScheduleForm> {
 
     try {
       final res = await http.post(
-        Uri.parse('$baseUrl/api/terminals/$selectedTerminalId/schedule'),
+        Uri.parse('$baseUrl/terminals/$selectedTerminalId/schedule'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'startOn': startIsoUtc, 'finishOn': finishIsoUtc}),
       );

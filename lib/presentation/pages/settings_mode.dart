@@ -9,6 +9,7 @@ import '../widgets/manual_terminal_card.dart';
 import '../widgets/mode_selector.dart';
 import '../widgets/auto_mode_banner.dart';
 import '../widgets/custom_bottom_nav.dart';
+import '../../core/api_config.dart';
 import 'dart:async';
 
 class SettingModeScreen extends StatefulWidget {
@@ -21,7 +22,6 @@ class SettingModeScreen extends StatefulWidget {
 class _SettingModeScreenState extends State<SettingModeScreen> {
   bool isManual = false; // <-- default ke OTOMATIS
   bool isRunning = false; // apakah knapsack sedang berjalan
-  final String baseUrl = 'http://10.0.2.2:3000';
   List<Terminal> terminals = [];
   RealtimeChannel? _channel;
   Timer? _statusPollTimer;
@@ -57,7 +57,7 @@ class _SettingModeScreenState extends State<SettingModeScreen> {
 
   Future<void> _checkKnapsackStatus() async {
     try {
-      final res = await http.get(Uri.parse('$baseUrl/api/knapsack/status'));
+      final res = await http.get(Uri.parse('$baseUrl/knapsack/status'));
       if (res.statusCode == 200) {
         final d = jsonDecode(res.body);
         final running = d['running'] == true;
@@ -70,7 +70,7 @@ class _SettingModeScreenState extends State<SettingModeScreen> {
 
   Future<void> _startKnapsackLoop() async {
     try {
-      final res = await http.post(Uri.parse('$baseUrl/api/knapsack/start'));
+      final res = await http.post(Uri.parse('$baseUrl/knapsack/start'));
       if (res.statusCode == 200) {
         setState(() => isRunning = true);
         ScaffoldMessenger.of(
@@ -90,7 +90,7 @@ class _SettingModeScreenState extends State<SettingModeScreen> {
 
   Future<void> _stopKnapsackLoop() async {
     try {
-      final res = await http.post(Uri.parse('$baseUrl/api/knapsack/stop'));
+      final res = await http.post(Uri.parse('$baseUrl/knapsack/stop'));
       if (res.statusCode == 200) {
         setState(() => isRunning = false);
         ScaffoldMessenger.of(
@@ -110,7 +110,7 @@ class _SettingModeScreenState extends State<SettingModeScreen> {
 
   Future<void> _fetchTerminals() async {
     try {
-      final res = await http.get(Uri.parse('$baseUrl/api/terminals'));
+      final res = await http.get(Uri.parse('$baseUrl/terminals'));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         final list = (data['data'] as List).map((e) {
@@ -196,7 +196,7 @@ class _SettingModeScreenState extends State<SettingModeScreen> {
       _pending[terminalId] = true;
     });
 
-    final uri = Uri.parse('$baseUrl/api/terminals/$terminalId/set');
+    final uri = Uri.parse('$baseUrl/terminals/$terminalId/set');
     try {
       final resp = await http.post(
         uri,
@@ -266,7 +266,7 @@ class _SettingModeScreenState extends State<SettingModeScreen> {
 
     Future<bool> checkOnce() async {
       try {
-        final res = await http.get(Uri.parse('$baseUrl/api/terminals'));
+        final res = await http.get(Uri.parse('$baseUrl/terminals'));
         if (res.statusCode == 200) {
           final data = jsonDecode(res.body);
           final list = (data['data'] as List);
