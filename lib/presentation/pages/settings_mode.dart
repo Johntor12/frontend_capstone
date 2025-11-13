@@ -30,7 +30,7 @@ class _SettingModeScreenState extends State<SettingModeScreen> {
   final Map<String, bool> _pending = {};
 
   // timeout for waiting DB ack (ms)
-  static const int ackTimeoutMs = 8000;
+  static const int ackTimeoutMs = 30000;
 
   @override
   void initState() {
